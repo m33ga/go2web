@@ -11,6 +11,6 @@ class HTMLParser(AbstractParser):
         for tag in soup(["script", "style", "noscript", "head"]):
             tag.decompose()
 
-        text = soup.get_text(separator="\n")
+        text = soup.get_text(separator="\n", strip=True)
 
         return text.strip()
