@@ -1,9 +1,54 @@
 [project]
-name = "g2w"
+name = "go2web"
 version = "0.1.0"
-description = "go2web - CLI for making requests and searching the web"
+description = "CLI for making requests and searching the web"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "typer>=0.24.1",
 ]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.5.1",
+    "ruff>=0.15.6",
+]
+
+[tool.ruff]
+line-length = 120
+indent-width = 4
+
+[tool.ruff.lint]
+select = [
+    "E", # pycodestyle
+    "F", # Pyflakes
+    "I", # isort
+    "B", # flake8-bugbear
+    "ASYNC", # flake8-async
+    "T10", # flake8-debugger
+    "ISC", # flake8-implicit-str-concat
+    "ICN", # flake8-import-conventions
+    "PIE", # flake8-pie
+    "BLE", # flake8-blind-except
+    "SIM", # flake8-simplify
+    "PTH", # flake8-use-pathlib
+    "FIX", # flake8 - fix me
+    "N", # pep8-naming
+    "UP", # pyupgrade
+]
+ignore = [
+    "ISC001", # Disabled to avoid unexpected behaviour on `ruff format .`
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[project.scripts]
+go2web = "go2web.main:app"
+
+[build-system]
+requires = ["uv_build>=0.10.8,<0.11.0"]
+build-backend = "uv_build"
