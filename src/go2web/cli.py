@@ -1,5 +1,7 @@
 import typer
 
+from go2web.commands.fetch import Fetcher
+
 app = typer.Typer(
     name="go2web",
     help="Make HTTP requests and search the web from your terminal.",
@@ -13,6 +15,7 @@ app = typer.Typer(
 @app.command(no_args_is_help=True)
 def fetch(url: str):
     """Make an HTTP request to the URL."""
+    print(Fetcher().fetch(url))
 
 
 @app.command(no_args_is_help=True)
