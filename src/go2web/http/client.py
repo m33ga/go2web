@@ -11,6 +11,12 @@ class Response:
     headers: dict[str, str]
     body: str
 
+    def get_content_type(self) -> str:
+        return self.headers["content-type"]
+
+    def get_status(self) -> int:
+        return self.status
+
 
 class HTTPError(Exception):
     def __init__(self, status: int, reason: str):

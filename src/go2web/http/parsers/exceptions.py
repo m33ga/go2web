@@ -1,0 +1,2 @@
+class UnsupportedContentTypeError(Exception):
+    pass
