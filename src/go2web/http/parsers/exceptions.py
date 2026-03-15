@@ -1,2 +1,2 @@
-class UnsupportedContentTypeError(Exception):
+class ParseError(Exception):
     pass

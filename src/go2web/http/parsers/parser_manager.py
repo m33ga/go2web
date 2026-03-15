@@ -1,5 +1,5 @@
 from go2web.http.parsers import HTMLParser, JSONParser, Parser
-from go2web.http.parsers.exceptions import UnsupportedContentTypeError
+from go2web.http.parsers.exceptions import ParseError
 
 
 class ParserManager:
@@ -12,4 +12,4 @@ class ParserManager:
         for ct, parser in self._REGISTRY.items():
             if ct.lower() in content_type.lower():
                 return parser
-        raise UnsupportedContentTypeError(content_type)
+        raise ParseError(content_type)

@@ -1,6 +1,6 @@
 from go2web.http.client import HTTPClient
 from go2web.http.parsers import ParserManager
-from go2web.http.parsers.exceptions import UnsupportedContentTypeError
+from go2web.http.parsers.exceptions import ParseError
 
 
 class Fetcher(HTTPClient):
@@ -9,5 +9,5 @@ class Fetcher(HTTPClient):
         try:
             parser = ParserManager().get_parser(response.get_content_type())
             return parser.parse(response.body)
-        except UnsupportedContentTypeError:
-            return "Server returned unsupported content type"
+        except ParseError as e:
+            return str(e)
