@@ -64,7 +64,7 @@ class HTTPClient:
 
         scheme = parsed.scheme.lower()
         if scheme not in ("http", "https"):
-            raise ValueError(f"Unsupported scheme: {scheme}")
+            raise HTTPError(f"Unsupported scheme: {scheme}")
 
         https = scheme == "https"
         host = parsed.hostname
