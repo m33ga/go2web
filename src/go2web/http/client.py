@@ -17,20 +17,46 @@ class Response:
     def get_status(self) -> int:
         return self.status
 
+    def is_redirect(self) -> bool:
+        return self.status in (301, 302, 303, 307, 308)
+
+    def redirect_url(self) -> str | None:
+        return self.headers.get("location")
+
 
 class HTTPError(Exception):
-    def __init__(self, status: int, reason: str):
-        self.status = status
-        self.reason = reason
-        super().__init__(f"HTTP {status}: {reason}")
+    pass
 
 
 class HTTPClient:
     DEFAULT_TIMEOUT = 10
+    MAX_REDIRECTS = 10
     BUFFER_SIZE = 4096
 
-    def get(self, url: str) -> Response:
-        response = self._do_get(url)
+    def get(self, url: str, *, follow_redirects: bool = True) -> Response:
+        visited = set()
+        current_url = url
+
+        while True:
+            if current_url in visited:
+                raise HTTPError(f"Error: Redirect loop detected at {current_url}")
+            if len(visited) >= self.MAX_REDIRECTS:
+                raise HTTPError(f"Error: Too many redirects (max {self.MAX_REDIRECTS})")
+
+            visited.add(current_url)
+            response = self._do_get(current_url)
+
+            if follow_redirects and response.is_redirect():
+                location = response.redirect_url()
+                if not location:
+                    raise HTTPError("Error: Redirect with no Location header")
+                # handle relative redirects
+                if location.startswith("/"):
+                    parsed = urlparse(current_url)
+                    location = f"{parsed.scheme}://{parsed.netloc}{location}"
+                current_url = location
+                continue
+
         return response
 
     def _do_get(self, url: str) -> Response:
