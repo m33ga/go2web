@@ -1,5 +1,4 @@
 import typer
-from typing import List
 
 app = typer.Typer(
     name="go2web",
@@ -7,16 +6,15 @@ app = typer.Typer(
     add_completion=False,
     no_args_is_help=True,
     rich_markup_mode="rich",
-    epilog="Made with :heart: at F[orange1]A[/orange1]F"
+    epilog="Made with [orange1]:heart:[/orange1] at FAF",
 )
+
 
 @app.command(no_args_is_help=True)
 def fetch(url: str):
     """Make an HTTP request to the URL."""
-    pass
 
 
 @app.command(no_args_is_help=True)
-def search(query: List[str]):
+def search(query: list[str]):
     """Search the web."""
-    pass
