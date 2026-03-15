@@ -12,4 +12,4 @@ class ParserManager:
         for ct, parser in self._REGISTRY.items():
             if ct.lower() in content_type.lower():
                 return parser
-        raise ParseError(content_type)
+        raise ParseError(f"Error: Cant find parser for: {content_type} (for now)")

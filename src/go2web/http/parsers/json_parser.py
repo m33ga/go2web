@@ -10,4 +10,4 @@ class JSONParser(AbstractParser):
             data = json.loads(body)
             return json.dumps(data, indent=2, ensure_ascii=False)
         except json.JSONDecodeError as e:
-            raise ParseError("Bad Jayson") from e
+            raise ParseError("Error: Bad Jayson or content encoding") from e
