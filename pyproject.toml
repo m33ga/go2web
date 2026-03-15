@@ -1,0 +1,9 @@
+[project]
+name = "g2w"
+version = "0.1.0"
+description = "go2web - CLI for making requests and searching the web"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "typer>=0.24.1",
+]
