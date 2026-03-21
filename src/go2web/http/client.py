@@ -56,7 +56,7 @@ class HTTPClient:
                     location = f"{parsed.scheme}://{parsed.netloc}{location}"
                 current_url = location
                 continue
-
+            break
         return response
 
     def _do_get(self, url: str) -> Response:
