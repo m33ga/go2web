@@ -1,6 +1,7 @@
 import typer
 
 from go2web.commands.fetch import Fetcher
+from go2web.commands.search import Searcher
 
 app = typer.Typer(
     name="go2web",
@@ -21,3 +22,4 @@ def fetch(url: str):
 @app.command(no_args_is_help=True)
 def search(query: list[str]):
     """Search the web."""
+    Searcher().search(" ".join(query))
