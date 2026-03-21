@@ -1,4 +1,5 @@
-from urllib.parse import quote_plus
+from base64 import b64decode
+from urllib.parse import parse_qs, quote_plus, urlparse
 
 from bs4 import BeautifulSoup
 
@@ -32,8 +33,16 @@ class BingEngine(BaseSearchEngine):
                 SearchResult(
                     rank=i + 1,
                     title=title_el.get_text(strip=True),
-                    url=title_el.get("href", ""),
+                    url=self._extract_url(title_el.get("href", "")),
                 )
             )
 
         return results
+
+    def _extract_url(self, href: str) -> str:
+        qs = parse_qs(urlparse(href).query)
+        raw = qs.get("u", [None])[0]
+        if raw and raw.startswith("a1"):
+            # strip the "a1" prefix and base64-decode
+            return b64decode(raw[2:] + "==").decode("utf-8", errors="replace")
+        return href
