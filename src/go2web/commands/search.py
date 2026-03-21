@@ -1,6 +1,10 @@
+import questionary
+from questionary import Choice
+
 from go2web.commands.fetch import Fetcher
 from go2web.search.engines.base import BaseSearchEngine
 from go2web.search.engines.bing import BingEngine
+from go2web.search.result import SearchResult
 
 
 class Searcher:
@@ -21,4 +25,23 @@ class Searcher:
             print("No results found.")
             return
 
-        print(results)
+        selected = self._prompt(results)
+
+        if selected is None:
+            return
+
+        self._open(selected)
+
+    def _prompt(self, results: list[SearchResult]) -> SearchResult | None:
+        choices = [Choice(title=f"{r.rank:>2}. {r.title}  {r.url}", value=r) for r in results]
+        choices.append(Choice(title="  Cancel", value=None))
+
+        return questionary.select(
+            "Select a result to open:",
+            choices=choices,
+        ).ask()
+
+    def _open(self, result: SearchResult) -> None:
+        print(f"\nFetching: {result.url}\n")
+        fetched = self._fetcher.fetch(result.url)
+        print(fetched)
