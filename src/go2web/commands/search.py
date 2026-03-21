@@ -27,14 +27,14 @@ class Searcher:
 
         selected = self._prompt(results)
 
-        if selected is None:
+        if not selected:
             return
 
         self._open(selected)
 
     def _prompt(self, results: list[SearchResult]) -> SearchResult | None:
         choices = [Choice(title=f"{r.rank:>2}. {r.title}  {r.url}", value=r) for r in results]
-        choices.append(Choice(title="  Cancel", value=None))
+        choices.append(Choice(title="Cancel", value=""))
 
         return questionary.select(
             "Select a result to open:",
