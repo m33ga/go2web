@@ -12,10 +12,7 @@ class Response:
     body: str
 
     def get_content_type(self) -> str:
-        return self.headers["content-type"]
-
-    def get_status(self) -> int:
-        return self.status
+        return self.headers.get("content-type", "")
 
     def is_redirect(self) -> bool:
         return self.status in (301, 302, 303, 307, 308)
