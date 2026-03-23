@@ -3,6 +3,8 @@ import ssl
 from dataclasses import dataclass
 from urllib.parse import urlparse
 
+from go2web.cache.store import CacheStore
+
 
 @dataclass
 class Response:
@@ -30,6 +32,10 @@ class HTTPClient:
     MAX_REDIRECTS = 10
     BUFFER_SIZE = 4096
 
+    def __init__(self, cache: CacheStore | None = None, use_cache: bool = True) -> None:
+        self._cache = cache or CacheStore()
+        self._use_cache = use_cache
+
     def get(self, url: str, *, follow_redirects: bool = True) -> Response:
         visited = set()
         current_url = url
@@ -41,6 +47,17 @@ class HTTPClient:
                 raise HTTPError(f"Error: Too many redirects (max {self.MAX_REDIRECTS})")
 
             visited.add(current_url)
+
+            if self._use_cache:
+                cached = self._cache.get(current_url)
+                if cached:
+                    return Response(
+                        status=cached.status,
+                        reason="",
+                        headers=cached.headers,
+                        body=cached.body,
+                    )
+
             response = self._do_get(current_url)
 
             if follow_redirects and response.is_redirect():
@@ -53,6 +70,9 @@ class HTTPClient:
                     location = f"{parsed.scheme}://{parsed.netloc}{location}"
                 current_url = location
                 continue
+
+            if self._use_cache and response.status < 400:
+                self._cache.set(current_url, response.status, response.headers, response.body)
             break
         return response
 
