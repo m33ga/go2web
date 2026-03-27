@@ -1,8 +1,22 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "go2web"
 version = "0.1.0"
 description = "CLI for making requests and searching the web"
 readme = "README.md"
+authors = [
+  {name = "Mihai Gurduza", email = "mihai.gurduza@isa.utm.md"}
+]
+maintainers = [
+  {name = "Mihai Gurduza", email = "mihai.gurduza@isa.utm.md"}
+]
+classifiers = [
+    "Typing :: Typed",
+]
+license = {text = "MIT"}
 requires-python = ">=3.13"
 dependencies = [
     "bs4>=0.0.2",
@@ -12,8 +26,24 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    { include-group = "lint" },
+    { include-group = "test" },
+    { include-group = "typecheck" },
+]
+lint = [
     "pre-commit>=4.5.1",
     "ruff>=0.15.6",
+]
+test = [
+    "coverage",
+    "pytest",
+]
+typecheck = [
+    "ty",
+]
+docs = [
+    "zensical",
+    "mkdocstrings-python",
 ]
 
 [tool.ruff]
@@ -42,15 +72,41 @@ ignore = [
     "ISC001", # Disabled to avoid unexpected behaviour on `ruff format .`
 ]
 
+[tool.coverage.run]
+branch = true
+parallel = true
+source = ["src/", "tests/"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 50
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "if typing.TYPE_CHECKING:",
+    "@overload",
+    "@typing.overload",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+    "raise NotImplementedError",
+    "\\.\\.\\.",
+]
+
+[tool.uv]
+package = true
+default-groups = ["dev"]
+
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
 
-[project.scripts]
-go2web = "go2web.main:app"
+[project.urls]
+bugs = "https://github.com/m33ga/g2w/issues"
+changelog = "https://github.com/m33ga/g2w/releases"
+documentation = "https://m33ga.github.io/g2w/"
+homepage = "https://github.com/m33ga/g2w"
 
-[build-system]
-requires = ["uv_build>=0.10.8,<0.11.0"]
-build-backend = "uv_build"
+[project.scripts]
+go2web = "go2web.cli:app"
