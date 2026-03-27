@@ -1,8 +1,8 @@
 [project]
 site_name = "go2web"
-site_url = "https://m33ga.github.io/g2w/"
-repo_url = "https://github.com/m33ga/g2w"
-repo_name = "m33ga/g2w"
+site_url = "https://m33ga.github.io/go2web/"
+repo_url = "https://github.com/m33ga/go2web"
+repo_name = "m33ga/go2web"
 
 nav = [
   { "Home" = "index.md" },
