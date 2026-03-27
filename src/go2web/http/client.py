@@ -85,6 +85,8 @@ class HTTPClient:
 
         https = scheme == "https"
         host = parsed.hostname
+        if host is None:
+            raise ValueError(f"Invalid URL, missing hostname: {url}")
         port = parsed.port or (443 if https else 80)
         path = parsed.path or "/"
         if parsed.query:

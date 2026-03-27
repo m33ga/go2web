@@ -29,11 +29,18 @@ class BingEngine(BaseSearchEngine):
             if not title_el:
                 continue
 
+            href = title_el.get("href")
+
+            if not isinstance(href, str):
+                continue
+
+            url = self._extract_url(href)
+
             results.append(
                 SearchResult(
                     rank=i + 1,
                     title=title_el.get_text(strip=True),
-                    url=self._extract_url(title_el.get("href", "")),
+                    url=url,
                 )
             )
 
