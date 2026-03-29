@@ -3,6 +3,8 @@ import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
+from go2web.console import print_info
+
 CACHE_FILE = Path.home() / ".go2web_cache.json"
 
 
@@ -28,7 +30,7 @@ class CacheStore:
         if time.time() > entry.expires_at:
             del self._store[url]
             return None
-        print("Entry retrieved from cache.")
+        print_info("Entry retrieved from cache.")
         return entry
 
     def set(self, url: str, status: int, headers: dict[str, str], body: str) -> None:

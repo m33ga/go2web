@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from urllib.parse import urlparse
 
 from go2web.cache.store import CacheStore
+from go2web.console import print_redirect
 
 
 @dataclass
@@ -71,7 +72,7 @@ class HTTPClient:
 
             if follow_redirects and response.is_redirect():
                 location = response.redirect_url()
-                print(f"Redirecting to: {location}")
+                print_redirect(response.status, response.reason, current_url, location)
                 if not location:
                     raise HTTPError("Error: Redirect with no Location header")
                 # handle relative redirects
