@@ -71,6 +71,7 @@ class HTTPClient:
 
             if follow_redirects and response.is_redirect():
                 location = response.redirect_url()
+                print(f"Redirecting to: {location}")
                 if not location:
                     raise HTTPError("Error: Redirect with no Location header")
                 # handle relative redirects
