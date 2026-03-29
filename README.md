@@ -4,6 +4,9 @@
 
 CLI for making requests and searching the web
 
+> ![go2web demo](docs/assets/demo.gif)
+
+---
 
 ## Features
 
