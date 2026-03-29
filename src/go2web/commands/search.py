@@ -2,6 +2,7 @@ import questionary
 from questionary import Choice
 
 from go2web.commands.fetch import Fetcher
+from go2web.console import print_error, print_info
 from go2web.search.engines.base import BaseSearchEngine
 from go2web.search.engines.bing import BingEngine
 from go2web.search.result import SearchResult
@@ -19,10 +20,14 @@ class Searcher:
         self._limit = limit
 
     def search(self, query: str, limit: int | None = None) -> None:
-        results = self._engine.search(query, limit=limit or self._limit)
+        try:
+            results = self._engine.search(query, limit=limit or self._limit)
+        except Exception as exc:
+            print_error(f"Search failed: {exc}")
+            raise SystemExit(1) from exc
 
         if not results:
-            print("No results found.")
+            print_info("No results found.")
             return
 
         selected = self._prompt(results)
@@ -30,7 +35,8 @@ class Searcher:
         if not selected:
             return
 
-        self._open(selected)
+        print_info(f"Fetching: {selected.url}")
+        self._fetcher.fetch(selected.url)
 
     def _prompt(self, results: list[SearchResult]) -> SearchResult | None:
         choices = [Choice(title=f"{r.rank:>2}. {r.title}  {r.url}", value=r) for r in results]
@@ -40,8 +46,3 @@ class Searcher:
             "Select a result to open:",
             choices=choices,
         ).ask()
-
-    def _open(self, result: SearchResult) -> None:
-        print(f"\nFetching: {result.url}\n")
-        fetched = self._fetcher.fetch(result.url)
-        print(fetched)
