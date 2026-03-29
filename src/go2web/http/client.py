@@ -36,9 +36,18 @@ class HTTPClient:
         self._cache = cache or CacheStore()
         self._use_cache = use_cache
 
+    @staticmethod
+    def _normalize_url(url: str) -> str:
+        parsed = urlparse(url)
+
+        if not parsed.scheme:
+            return f"https://{url}"
+
+        return url
+
     def get(self, url: str, *, follow_redirects: bool = True) -> Response:
         visited = set()
-        current_url = url
+        current_url = self._normalize_url(url)
 
         while True:
             if current_url in visited:
