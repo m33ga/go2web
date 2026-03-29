@@ -8,7 +8,14 @@ nav = [
   { "Home" = "index.md" },
   { "Installation" = "installation.md" },
   { "Usage" = "usage.md" },
-  { "API Reference" = "api.md" },
+  { "API Reference" = [
+    { "Overview" = "api/index.md" },
+    { "HTTP client" = "api/http.md" },
+    { "Content parsers" = "api/parsers.md" },
+    { "Cache" = "api/cache.md" },
+    { "Search" = "api/search.md" },
+    { "Commands" = "api/commands.md" },
+  ]},
 ]
 
 [[project.theme.palette]]

@@ -1,3 +1,18 @@
+"""Low-level HTTP client built on raw sockets.
+
+No third-party HTTP library is used. The client opens a TCP (or TLS-wrapped)
+socket, sends a minimal HTTP/1.1 GET request, reads the response, and returns
+a :class:`Response` object. Chunked transfer-encoding and automatic redirect
+following are supported.
+
+Example:
+    >>> from go2web.http.client import HTTPClient
+    >>> client = HTTPClient()
+    >>> response = client.get("https://httpbin.org/json")
+    >>> print(response.status)
+    200
+"""
+
 import socket
 import ssl
 from dataclasses import dataclass
@@ -9,36 +24,98 @@ from go2web.console import print_redirect
 
 @dataclass
 class Response:
+    """A parsed HTTP response.
+
+    Attributes:
+        status: The HTTP status code (e.g. ``200``, ``404``).
+        reason: The human-readable status phrase (e.g. ``"OK"``).
+        headers: Response headers with lower-cased keys for easy lookup.
+        body: The decoded response body as a string.
+    """
+
     status: int
     reason: str
     headers: dict[str, str]
     body: str
 
     def get_content_type(self) -> str:
+        """Return the value of the ``Content-Type`` header.
+
+        Returns:
+            The content-type string (e.g. ``"text/html; charset=utf-8"``),
+            or an empty string if the header is absent.
+        """
         return self.headers.get("content-type", "")
 
     def is_redirect(self) -> bool:
+        """Return ``True`` if the status code indicates a redirect.
+
+        The following codes are treated as redirects:
+        301, 302, 303, 307, 308.
+        """
         return self.status in (301, 302, 303, 307, 308)
 
     def redirect_url(self) -> str | None:
+        """Return the URL from the ``Location`` header, or ``None`` if absent."""
         return self.headers.get("location")
 
 
 class HTTPError(Exception):
-    pass
+    """Raised when a non-recoverable HTTP or network error occurs.
+
+    Examples include redirect loops, too many redirects, unsupported URL
+    schemes, or a missing ``Location`` header on a redirect response.
+    """
 
 
 class HTTPClient:
+    """A simple, cache-aware HTTP client using raw sockets.
+
+    All requests are made with HTTP/1.1 GET. TLS is supported for ``https://``
+    URLs. Responses are optionally cached in a :class:`~go2web.cache.store.CacheStore`.
+
+    Attributes:
+        DEFAULT_TIMEOUT: Socket timeout in seconds (default ``10``).
+        MAX_REDIRECTS: Maximum number of redirects to follow before raising
+            :class:`HTTPError` (default ``10``).
+        BUFFER_SIZE: Read buffer size in bytes (default ``4096``).
+
+    Example:
+        Fetching a URL with caching disabled:
+
+        >>> client = HTTPClient(use_cache=False)
+        >>> response = client.get("https://example.com")
+        >>> print(response.status)
+        200
+
+        Using a custom cache location:
+
+        >>> from pathlib import Path
+        >>> from go2web.cache.store import CacheStore
+        >>> cache = CacheStore(cache_file=Path("/tmp/my_cache.json"))
+        >>> client = HTTPClient(cache=cache)
+    """
+
     DEFAULT_TIMEOUT = 10
     MAX_REDIRECTS = 10
     BUFFER_SIZE = 4096
 
     def __init__(self, cache: CacheStore | None = None, use_cache: bool = True) -> None:
+        """Initialise the client.
+
+        Args:
+            cache: A :class:`~go2web.cache.store.CacheStore` instance to use.
+                A default store backed by ``~/.go2web_cache.json`` is created
+                when *cache* is ``None``.
+            use_cache: Set to ``False`` to bypass both reading from and writing
+                to the cache.
+        """
         self._cache = cache or CacheStore()
         self._use_cache = use_cache
 
     @staticmethod
     def _normalize_url(url: str) -> str:
+        """Prepend ``https://`` to *url* when no scheme is present."""
         parsed = urlparse(url)
 
         if not parsed.scheme:
@@ -47,6 +124,31 @@ class HTTPClient:
         return url
 
     def get(self, url: str, *, follow_redirects: bool = True) -> Response:
+        """Perform an HTTP GET request, following redirects by default.
+
+        The cache is checked before issuing a network request. On a cache
+        miss, the live response is stored (unless caching is disabled or the
+        server sends ``Cache-Control: no-store``).
+
+        Args:
+            url: The URL to fetch. A missing ``https://`` scheme is added
+                automatically.
+            follow_redirects: When ``True`` (the default), 3xx responses are
+                followed automatically up to :attr:`MAX_REDIRECTS` hops.
+
+        Returns:
+            A :class:`Response` for the final (non-redirect) response.
+
+        Raises:
+            HTTPError: On redirect loops, too many redirects, unsupported
+                schemes, or a redirect with no ``Location`` header.
+
+        Example:
+            >>> client = HTTPClient()
+            >>> response = client.get("example.com")   # https:// added automatically
+            >>> response.status
+            200
+        """
         visited = set()
         current_url = self._normalize_url(url)
 
@@ -88,6 +190,7 @@ class HTTPClient:
         return response
 
     def _do_get(self, url: str) -> Response:
+        """Issue a single (non-redirect-aware) GET request to *url*."""
         parsed = urlparse(url)
 
         scheme = parsed.scheme.lower()
@@ -114,6 +217,7 @@ class HTTPClient:
         return self._parse_response(raw)
 
     def _open_socket(self, host: str, port: int, https: bool) -> socket.socket:
+        """Open a TCP socket, wrapping it in TLS when *https* is ``True``."""
         sock = socket.create_connection((host, port), timeout=self.DEFAULT_TIMEOUT)
         if https:
             ctx = ssl.create_default_context()
@@ -121,11 +225,12 @@ class HTTPClient:
         return sock
 
     def _build_request(self, host: str, path: str) -> str:
+        """Build a minimal HTTP/1.1 GET request string."""
         lines = [
             f"GET {path} HTTP/1.1",
             f"Host: {host}",
             "Accept: text/html,application/json,*/*",
-            "Accept-Encoding: identity",  # no compresion - no problemasion
+            "Accept-Encoding: identity",  # no compression - no problemasion
             "Connection: close",
             "",
             "",
@@ -133,6 +238,7 @@ class HTTPClient:
         return "\r\n".join(lines)
 
     def _read_response(self, sock: socket.socket) -> bytes:
+        """Read the full response from *sock* into a single bytes object."""
         chunks = []
         while True:
             chunk = sock.recv(self.BUFFER_SIZE)
@@ -142,6 +248,7 @@ class HTTPClient:
         return b"".join(chunks)
 
     def _parse_response(self, raw: bytes) -> Response:
+        """Parse raw response bytes into a :class:`Response`."""
         # split headers from body on the first blank line
         header_section, _, body_bytes = raw.partition(b"\r\n\r\n")
         header_lines = header_section.decode("utf-8", errors="replace").split("\r\n")
@@ -169,7 +276,7 @@ class HTTPClient:
         return Response(status=status, reason=reason, headers=headers, body=body)
 
     def _decode_chunked(self, data: bytes) -> bytes:
-        """Strip chunk size lines and reassemble the body."""
+        """Strip chunk-size lines and reassemble a chunked response body."""
         result = []
         while data:
             # find the end of the chunk-size line
