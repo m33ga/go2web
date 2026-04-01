@@ -221,6 +221,7 @@ class HTTPClient:
         sock = socket.create_connection((host, port), timeout=self.DEFAULT_TIMEOUT)
         if https:
             ctx = ssl.create_default_context()
+            ctx.minimum_version = ssl.TLSVersion.TLSv1_2
             sock = ctx.wrap_socket(sock, server_hostname=host)
         return sock
 
